@@ -1,0 +1,23 @@
+{
+  "name": "slot-machine",
+  "version": "1.0.0",
+  "description": "Simple project for learning purpose of Javascript. ## Disclaimer **I DO NOT SUPPORT GAMBLING!**<br /> This project is for educational purposes only.",
+  "main": "service.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/danangsw/slot-machine-js.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/danangsw/slot-machine-js/issues"
+  },
+  "homepage": "https://github.com/danangsw/slot-machine-js#readme",
+  "dependencies": {
+    "prompt-sync": "^4.2.0"
+  }
+}
