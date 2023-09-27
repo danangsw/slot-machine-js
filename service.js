@@ -9,12 +9,21 @@
  * 6. System: Give the user their winning
  * 7. User: Play agan?
  * 
+ * reference CLI: https://youtu.be/_oHByo8tiEY?si=TxmuqT1T2PuFjSN-
+ * 
  */
 
 import prompt from 'prompt-sync';
+import chalk from 'chalk';
+import chalkAnimation from 'chalk-animation';
+import figlet from 'figlet';
+import gradient from 'gradient-string';
+import inquirer from 'inquirer';
 
 const input = prompt();
- 
+
+let balanceAmount = 0; // INITIAL BALANCE
+
 const ROWS= 3;
 const COLS = 3;
 
@@ -34,11 +43,79 @@ const SYMBOLS_VALUE = {
     "E": 1
 };
 
+const sleep = (ms = 2000) => new Promise((r) => setTimeout(r, ms));
+
+const welcome = async () => {
+    const welcomeTitle = chalkAnimation.rainbow(
+        'WHO WANTS TO BE A JAVASCRIPT MILLIONAIRE? \n'
+    );
+    await sleep();
+    figlet('LOT$ OF $LOT', (err, data) => {
+        console.log(gradient.pastel.multiline(data));
+    });
+
+    await sleep();
+    welcomeTitle.stop();
+    // console.log(`
+    // ${chalk.yellowBright('HOW TO PLAY?')}
+    // 1. Deposit some money ${chalk.greenBright("$$$")}
+    // 2. Determine number of ${chalk.blueBright("lines")} to bet on
+    // 3. Collect bet a amount ${chalk.greenBright("$$$")}
+    // 4. ${chalk.bgRedBright("Spin")} the slot machine
+    // 5. Get your winning ${chalk.greenBright("$$$")}
+    // `);
+};
+
+const getStarted = async () => { 
+    while (true) { 
+        const answerChoices = [
+            `1. Deposit some money ${chalk.greenBright("$$$")}`,
+            `2. Determine number of ${chalk.bgRedBright("lines")} to bet on`,
+            `3. Collect bet a amount ${chalk.greenBright("$$$")}`,
+            `4. ${chalk.bgRedBright("Spin")} the slot machine`,
+            `5. Quit game`
+        ];
+    
+        console.log(`${chalk.yellowBright('GETTING STARTED')}`);
+        const answers = await inquirer.prompt({
+            name: 'game_options',
+            type: 'list',
+            message: 'Please choose your action:',
+            choices: answerChoices
+        });
+    
+        console.clear();
+    
+        const gameOption = answerChoices.indexOf(answers.game_options);
+    
+        switch (gameOption) {
+            case 0:
+                balanceAmount = await deposit();
+                console.log(`Your balance ${chalk.greenBright('$')+chalk.bgGreenBright(balanceAmount)}`)
+                await sleep();
+                console.clear();
+                break;
+            case 1:
+                
+                break;
+            case 2:
+                
+                break;
+            case 3:
+                
+                break;
+            default:
+                process.exit(1);
+                break;
+        }
+    }
+}
+
 /**
  * 1. User: Deposit some money
  * @returns number of deposit amount
  */
-const deposit  = () => {
+const deposit  = async () => {
     while(true) {
         const inputDepositAmount = input("Enter a deposit amount (>= $100): ");
         const numberDepositAmount = parseFloat(inputDepositAmount);
@@ -163,7 +240,7 @@ const getWinning = (reels, bet, lines) => {
  * Play the game
  */
 const game = () => { 
-    let balanceAmount = deposit();
+    balanceAmount = deposit();
     
     while (true) { 
         let betLines = getNumberOfLines();
@@ -196,4 +273,6 @@ const game = () => {
 };
 
 // Code drive
-game();
+//game();
+await welcome();
+await getStarted();
