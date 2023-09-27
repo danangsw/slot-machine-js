@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 /**
  * 
  * TODO:
@@ -19,6 +21,7 @@ import chalkAnimation from 'chalk-animation';
 import figlet from 'figlet';
 import gradient from 'gradient-string';
 import inquirer from 'inquirer';
+import spinner from 'nanospinner';
 
 const input = prompt();
 
@@ -43,7 +46,7 @@ const SYMBOLS_VALUE = {
     "E": 1
 };
 
-const sleep = (ms = 2000) => new Promise((r) => setTimeout(r, ms));
+const sleep = (ms = 1000) => new Promise((r) => setTimeout(r, ms));
 
 const welcome = async () => {
     const welcomeTitle = chalkAnimation.rainbow(
@@ -56,27 +59,32 @@ const welcome = async () => {
 
     await sleep();
     welcomeTitle.stop();
-    // console.log(`
-    // ${chalk.yellowBright('HOW TO PLAY?')}
-    // 1. Deposit some money ${chalk.greenBright("$$$")}
-    // 2. Determine number of ${chalk.blueBright("lines")} to bet on
-    // 3. Collect bet a amount ${chalk.greenBright("$$$")}
-    // 4. ${chalk.bgRedBright("Spin")} the slot machine
-    // 5. Get your winning ${chalk.greenBright("$$$")}
-    // `);
+    console.log(`
+    ${chalk.yellowBright('HOW TO PLAY?')}
+    1. Deposit some money ${chalk.greenBright("$$$")}
+    2. Determine number of ${chalk.blueBright("lines")} to bet on
+    3. Collect bet a amount ${chalk.greenBright("$$$")}
+    4. ${chalk.bgRedBright("Spin")} the slot machine
+    5. Get your winning ${chalk.greenBright("$$$")}
+    `);
 };
 
 const getStarted = async () => { 
+    let betLines = 0;
+    let betAmount = 0;
+
     while (true) { 
         const answerChoices = [
-            `1. Deposit some money ${chalk.greenBright("$$$")}`,
-            `2. Determine number of ${chalk.bgRedBright("lines")} to bet on`,
-            `3. Collect bet a amount ${chalk.greenBright("$$$")}`,
-            `4. ${chalk.bgRedBright("Spin")} the slot machine`,
-            `5. Quit game`
+            `1. Deposit ${chalk.greenBright("$$$")}`,
+            `2. Let's bet on`,
+            `3. ${chalk.bgRedBright("Spin Now!")}`,
+            `4. Quit game`
         ];
     
-        console.log(`${chalk.yellowBright('GETTING STARTED')}`);
+        console.log(`:: ${chalk.yellowBright('GETTING STARTED')}`);
+        console.log(`Your balance ${chalk.greenBright('$') + chalk.bgGreenBright(balanceAmount)}`);
+        console.log(`Your bet amount ${chalk.greenBright('$') + chalk.bgGreenBright(betAmount)}`);
+        console.log(`Your bet lines ${chalk.bgRedBright(betLines)}`);
         const answers = await inquirer.prompt({
             name: 'game_options',
             type: 'list',
@@ -90,24 +98,42 @@ const getStarted = async () => {
     
         switch (gameOption) {
             case 0:
-                balanceAmount = await deposit();
-                console.log(`Your balance ${chalk.greenBright('$')+chalk.bgGreenBright(balanceAmount)}`)
-                await sleep();
-                console.clear();
+                balanceAmount += await deposit();
                 break;
             case 1:
-                
+                if (balanceAmount > 0) {
+                    betLines = await getNumberOfLines();
+                    betAmount = await getBet(balanceAmount, betLines);
+                } else { 
+                    console.log('You ran out of money!');
+                }
                 break;
             case 2:
-                
+                if (balanceAmount > 0 &&
+                    betLines > 0 &&
+                    betAmount > 0
+                ) { 
+                    balanceAmount -= betLines * betAmount;
+                    balanceAmount = balanceAmount < 0 ? 0 : balanceAmount;
+                    balanceAmount = await playGame(balanceAmount, betAmount, betLines);
+                    await sleep(1000);
+                }
+                else { 
+                    console.log('You ran out of money!');
+                }
                 break;
             case 3:
-                
-                break;
-            default:
+                spinner.createSpinner('Exit...').start();
+                await sleep(500);
                 process.exit(1);
+            default:
                 break;
         }
+
+        const loader = spinner.createSpinner('Saving...').start();
+        await sleep();
+        loader.stop();
+        console.clear();
     }
 }
 
@@ -133,7 +159,7 @@ const deposit  = async () => {
  * 2. User: Determine numnber of lines to bet on
  * @returns number of lines to bet on
  */
-const getNumberOfLines = () => { 
+const getNumberOfLines = async () => { 
     while(true) {
         const inputLines = input(`Enter the number of line to bet on (1-${ROWS}): `);
         const numberLines = parseFloat(inputLines);
@@ -153,7 +179,7 @@ const getNumberOfLines = () => {
  * @param {number} lines number to bet on
  * @returns number bet amount 
  */
-const getBet = (balance, lines) => {
+const getBet = async (balance, lines) => {
     while (true) { 
         const maxBet = Math.floor(balance / lines);
         const inputBet = input(`Enter a bet amount (<= $${maxBet}): `);
@@ -215,8 +241,10 @@ const transpose = (reels) => {
 
 const printReels = (reels) => { 
     for (const row of reels) {
-        const rowString = row.join(' | ');
-        console.log(rowString);
+        const rowString = row.join(' - ');
+        figlet(rowString, (err, data) => {
+            console.log(gradient.pastel.multiline(data));
+        });
     }
 }
 
@@ -239,40 +267,43 @@ const getWinning = (reels, bet, lines) => {
 /**
  * Play the game
  */
-const game = () => { 
-    balanceAmount = deposit();
-    
-    while (true) { 
-        let betLines = getNumberOfLines();
-        let betAmount = getBet(balanceAmount, betLines);
-        balanceAmount -= betLines * betAmount;
+const game = async () => { 
+    await welcome();
+    await getStarted();
+};
 
-        let won = 0;
-        let spinner = 1;
-        while (won == 0 && balanceAmount >= 0) { 
-            console.log(`${spinner++}. Spinning...`);
-            let reels = spin();
-            let transposeReels = transpose(reels);
-            printReels(transposeReels);
-            won = getWinning(transposeReels, betAmount, betLines);
-            balanceAmount += won;
-            console.log(`You Won! $${won}`);
-            console.log(`Your balance now: $${balanceAmount}`);
+const playGame = async (balance, betAmount, betLines) => { 
+    let won = 0;
 
-            balanceAmount--;
+    while (won == 0) { 
+        let reels = spin();
+        let transposeReels = transpose(reels);
+        printReels(transposeReels);
+        won = getWinning(transposeReels, betAmount, betLines);
+        balance += won;
+        balance--;
+        
+        console.log(balance, won, betAmount, betLines);
+        await sleep(500);
+
+        if (won > 0) { 
+            console.log(`You Won ${chalk.greenBright('$') + chalk.bgGreenBright(won)}!!!`);
+            console.log(`Your balance ${chalk.greenBright('$') + chalk.bgGreenBright(balance)}`);
+            await sleep(2000);
         }
 
-        if (balanceAmount <= 0) { 
-            console.log('You ran out of money!');
+        if (balance <= 0) { 
+            balance = 0;
+            console.log(`${chalk.bgRedBright('You ran out of money!')}, your balance ${chalk.greenBright('$') + chalk.bgGreenBright(balance)}`);
+            await sleep(2000);
             break;
         }
 
-        let playAgain = input(`Do you want to play again (y/n): `);
-        if (playAgain.toLowerCase() === 'n') break;
+        console.clear();
     }
-};
+
+    return balance;
+}
 
 // Code drive
-//game();
-await welcome();
-await getStarted();
+await game();
