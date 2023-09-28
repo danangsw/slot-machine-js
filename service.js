@@ -31,11 +31,11 @@ const ROWS= 3;
 const COLS = 3;
 
 const SYMBOLS_COUNT = {
-    "A": 2,
-    "B": 4,
-    "C": 6,
-    "D": 8,
-    "E": 10
+    "A": 3,
+    "B": 6,
+    "C": 9,
+    "D": 12,
+    "E": 15
 };
 
 const SYMBOLS_VALUE = {
@@ -143,10 +143,10 @@ const getStarted = async () => {
  */
 const deposit  = async () => {
     while(true) {
-        const inputDepositAmount = input("Enter a deposit amount (>= $100): ");
+        const inputDepositAmount = input("Enter a deposit amount (>= $0): ");
         const numberDepositAmount = parseFloat(inputDepositAmount);
 
-        if(isNaN(numberDepositAmount) || numberDepositAmount < 100) {
+        if(isNaN(numberDepositAmount) || numberDepositAmount < 0) {
             console.log('Invalid deposit amount, try again.');
         }
         else {
